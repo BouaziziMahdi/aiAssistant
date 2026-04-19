@@ -10,14 +10,24 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.UUID;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("api/chat")
 public class ChatController {
-    public  final ChatService chatService ;
+    private final ChatService chatService;
     @PostMapping
-    public  ChatReponse chat(@Valid @RequestBody ChatRequest request){
-        String answer=chatService.ask(request.message());
-        return  new ChatReponse(answer);
+    public ChatReponse chat(@RequestBody ChatRequest request) {
+
+        String sessionId = request.sessionId();
+
+        if (sessionId == null || sessionId.isBlank()) {
+            sessionId = UUID.randomUUID().toString();
+        }
+
+        String response = chatService.chat(sessionId, request.message());
+
+        return new ChatReponse(sessionId, response);
     }
 }

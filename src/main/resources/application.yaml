@@ -20,12 +20,13 @@ spring:
       chat:
         options:
           model: mistral
-          temperature: 0.2
+      embedding:
+        options:
+          model: nomic-embed-text
 
     vectorstore:
       pgvector:
         initialize-schema: true
-        dimensions: 1536
 
 management:
   endpoints:

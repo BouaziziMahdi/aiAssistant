@@ -10,11 +10,23 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class ChatService {
+
     private final ChatClient chatClient;
     private final ConversationMemoryService memoryService;
     private final RagRetrievalService ragRetrievalService;
+    private final ToolRoutingService toolRoutingService;
 
     public String chat(String sessionId, String message) {
+
+        // Fallback orchestration for scheduling
+        if (toolRoutingService.shouldHandleScheduling(message)) {
+            String toolResponse = toolRoutingService.tryHandleScheduling(message);
+
+            memoryService.saveUserMessage(sessionId, message);
+            memoryService.saveAssistantMessage(sessionId, toolResponse);
+
+            return toolResponse;
+        }
 
         List<ConversationMessage> history =
                 memoryService.getConversationHistory(sessionId);
@@ -25,9 +37,9 @@ public class ChatService {
 
         prompt.append("""
                 You are an AI assistant helping users with dog adoption.
-                Always use previous conversation context.
-                If retrieved knowledge is available, use it in your answer.
-                If no relevant knowledge is found, answer normally.
+                Use previous conversation context when relevant.
+                If retrieved knowledge is available, use it.
+                If the user asks to schedule a visit, use the scheduling tool when possible.
                 Answer clearly and concisely.
                 """);
 

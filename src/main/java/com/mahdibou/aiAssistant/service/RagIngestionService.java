@@ -5,6 +5,7 @@ import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -12,11 +13,16 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class RagIngestionService {
     private final VectorStore vectorStore;
+    private final TextChunkingService chunkingService;
 
     public void ingest(String content , String source){
-        Document document=new Document(
-                content, Map.of("source",source)
-        );
-        vectorStore.add(List.of(document));
+        List<String>chunks=chunkingService.chunk(content);
+        List<Document> documents=chunks.stream().map(
+                chunk-> new Document(
+                        chunk,
+                        Map.of("source", source)
+                ))
+                .toList();
+        vectorStore.add(documents);
     }
 }
